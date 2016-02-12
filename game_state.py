@@ -1,0 +1,38 @@
+from team_manager import TeamManager
+from pending_start_handler import PendingStartHandler
+from generate_game_handler import GenerateGameHandler
+from clue_input_handler import ClueInputHandler
+from guess_input_handler import GuessInputHandler
+from board import Board
+import random
+
+
+class GameState:
+    def __init__(self, slack_client, random_func=None, chat=None, channel=None):
+        self.chat = chat
+        self.channel = channel
+        self.team_manager = TeamManager(self.chat, random_func=random_func)
+        self.slack_client = slack_client
+        self.handler = PendingStartHandler(self)
+        self.board = Board(self.chat, random_func=random_func)
+        self.clue_input_handler = None
+        self.rand_func = random_func
+        self.clue_number = None
+        if not self.rand_func:
+            self.random_func = random
+        
+    def pending_start_complete(self):
+        self.handler = GenerateGameHandler(self)
+        
+    def generate_game_complete(self):
+        if not self.clue_input_handler:
+            self.clue_input_handler = ClueInputHandler(self)
+        self.handler = self.clue_input_handler
+        
+    def clue_input_complete(self, clue_number):
+        self.clue_number = clue_number
+        self.handler = GuessInputHandler(self, clue_number)
+        
+    def guess_input_complete(self):
+        self.generate_game_complete()
+        
