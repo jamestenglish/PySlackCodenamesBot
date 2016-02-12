@@ -1,7 +1,7 @@
 import unittest
 from board import BLUE_TEAM, Board
 from wordlist import word_list
-from .random_mock import RandomMock
+from test.random_mock import RandomMock
 
 class ChatMock:
     pass

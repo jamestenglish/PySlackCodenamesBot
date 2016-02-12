@@ -1,12 +1,12 @@
 import unittest
-from .mock_slack_client import MockSlackClient
+from test.mock_slack_client import MockSlackClient
 from game_state import GameState
 from clue_input_handler import ClueInputHandler
 from player import Player
 
 from chat import Chat
 
-from .random_mock import RandomMock
+from test.random_mock import RandomMock
 
 
 class TestClueInputHandler(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestClueInputHandler(unittest.TestCase):
         manager.add_player(Player("p5", slack_client))
         manager.pick_teams()
     
-    def test_solict_word_tick(self):
+    def test_solicit_word_tick(self):
         self.handler.tick()
         self.assertEqual(self.handler.tick_func, None)
         
@@ -42,8 +42,8 @@ class TestClueInputHandler(unittest.TestCase):
         self.assertEqual("p3_dm", self.slack_client.api_calls[-1][2])
         
         self.handler.process({"text": "foo bar", "channel": "p3_dm"})
-        self.assertEqual("Invalid input! One word only! Please try again...", self.slack_client.api_calls[-3][1])
         self.assertEqual("Invalid input! One word only! Please try again...", self.slack_client.api_calls[-1][1])
+        self.assertEqual("Invalid input! One word only! Please try again...", self.slack_client.api_calls[-3][1])
 
     def test_process_word(self):
         self.handler.tick()
@@ -71,7 +71,3 @@ class TestClueInputHandler(unittest.TestCase):
         
         self.assertEqual(12, self.game_state.clue_number)
         self.assertEqual("*Blue Team:* your clue is: `foo 12`", self.slack_client.api_calls[-2][1])
-  
-
-        
-        

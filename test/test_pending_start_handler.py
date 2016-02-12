@@ -1,7 +1,7 @@
 import unittest
 from game_state import GameState
 from pending_start_handler import PendingStartHandler, START_COMMAND, JOIN_COMMAND
-from .mock_slack_client import MockSlackClient
+from test.mock_slack_client import MockSlackClient
 from game_end_exception import GameEndException
 from generate_game_handler import GenerateGameHandler
 

@@ -33,8 +33,9 @@ class TeamManager:
         field_operatives = ""
         for player in team[1:]:
             field_operatives += "{}\n".format(player.get_username())
-            
-        self.chat.message("*{} Spymaster:*\n{}\n\n*Red Field Operatives:\n*{}".format(color,team[0].get_username(), field_operatives))
+
+        message = "*{} Spymaster:*\n{}\n\n*Red Field Operatives:\n*{}"
+        self.chat.message(message.format(color,team[0].get_username(), field_operatives))
         
     def get_red_spymaster(self):
         return self.red_team[0]
@@ -53,5 +54,3 @@ class TeamManager:
                 operative_ids.append(player.slack_id)
                 
         return operative_ids
-                
-        

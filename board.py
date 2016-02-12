@@ -101,7 +101,18 @@ class Board:
             self.current_team = RED_TEAM
         else:
             self.current_team = BLUE_TEAM
-        
+
+    def get_winner(self):
+        total_blue_spots = self.secret_board.count(BLUE_SPOT)
+        total_red_spots = self.secret_board.count(RED_SPOT)
+
+        if self.current_board.count(BLUE_SPOT) == total_blue_spots:
+            return BLUE_TEAM
+
+        if self.current_board.count(RED_SPOT) == total_red_spots:
+            return RED_TEAM
+
+        return None
 
         
         

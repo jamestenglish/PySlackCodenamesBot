@@ -1,6 +1,6 @@
 import unittest
-from .random_mock import RandomMock
-from .mock_slack_client import MockSlackClient
+from test.random_mock import RandomMock
+from test.mock_slack_client import MockSlackClient
 from game_state import GameState
 from player import Player
 from chat import Chat
@@ -9,13 +9,17 @@ from game_end_exception import GameEndException
 from board import BLUE_TEAM, RED_TEAM
 from clue_input_handler import ClueInputHandler
 
-class TestGuessInputHandle(unittest.TestCase):
+
+class TestGuessInputHandler(unittest.TestCase):
     
     def setUp(self):
         unittest.TestCase.setUp(self)
         random = RandomMock()
         self.slack_client = MockSlackClient()
-        self.game_state = GameState(self.slack_client, random_func=random, chat=Chat(self.slack_client, "chat_chanel"), channel="chat_chanel")
+        self.game_state = GameState(self.slack_client,
+                                    random_func=random,
+                                    chat=Chat(self.slack_client, "chat_chanel"),
+                                    channel="chat_chanel")
         self.handler = GuessInputHandler(self.game_state, 2)
         self._add_players(self.slack_client, self.game_state)
         
@@ -68,19 +72,19 @@ class TestGuessInputHandle(unittest.TestCase):
         self.handler.process(data)
         self.assertEqual("Shush <@p1>! It's not your turn to guess!", self.slack_client.api_calls[-1][1])
 
-    def test_process_quit_fail(self):
+    def test_process_stop_fail(self):
         data = {'text': 'cn stop guess', 'channel': 'chat_chanel', 'user': 'p4'}
         self.handler.process(data)
         self.assertEqual("You have to guess at least once!", self.slack_client.api_calls[-1][1])
         
     def test_handle_assassin_guess(self):
-        exception_occured = False
+        exception_occurred = False
         try: 
             self.handler._handle_assassin_guess('bear')
         except GameEndException:
-            exception_occured = True
+            exception_occurred = True
             
-        self.assertTrue(exception_occured)
+        self.assertTrue(exception_occurred)
         self.assertEqual("You picked the assassin! Blue Team loses! Red Team wins!", self.slack_client.api_calls[-1][1])
 
     def test_process_valid_guess_incorrect_assassin(self):
@@ -103,8 +107,7 @@ class TestGuessInputHandle(unittest.TestCase):
         
         self.assertTrue(self.handler._is_wrong_guess('BEACH', RED_TEAM))
         self.assertFalse(self.handler._is_wrong_guess('BEACH', BLUE_TEAM))
-        
-    
+
     def test_process_wrong_guess(self):
         data = {'text': 'cn guess angel', 'channel': 'chat_chanel', 'user': 'p4'}
         self.handler.process(data)
@@ -125,12 +128,97 @@ class TestGuessInputHandle(unittest.TestCase):
         self.assertEqual("No more guesses! On to the Red Team", self.slack_client.api_calls[-1][1])
         self.assertTrue(isinstance(self.game_state.handler, ClueInputHandler))
 
-    
-        
-    # TODO test_process_valid_guess_correct
-    # TODO test_process_valid_guess_correct_win
-    # TODO test_process_valid_guess_correct_last_guess
-    # TODO test_process_valid_guess_incorrect_team
-    # TODO test_process_valid_guess_incorrect_bystander
-    # TODO test_process_valid_guess_incorrect_assassin
-    # TODO test_process_quit
+    def test_process_valid_guess_correct(self):
+        data = {'text': 'cn guess back', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+        self.assertEqual("Correct! You have 2 more guesses.", self.slack_client.api_calls[-2][1])
+
+    def test_get_winner(self):
+        board = self.handler.board
+        board.update_board_reveal_secret('AMERICA')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('ANGEL')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('ANTARCTICA')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('APPLE')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('ARM')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('ATLANTIS')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('AUSTRALIA')
+        self.assertEqual(None, board.get_winner())
+
+        board.update_board_reveal_secret('AZTEC')
+        self.assertEqual(RED_TEAM, board.get_winner())
+
+    def test_handle_if_win(self):
+        board = self.handler.board
+        board.update_board_reveal_secret('AMERICA')
+        board.update_board_reveal_secret('ANGEL')
+        board.update_board_reveal_secret('ANTARCTICA')
+        board.update_board_reveal_secret('APPLE')
+        board.update_board_reveal_secret('ARM')
+        board.update_board_reveal_secret('ATLANTIS')
+        board.update_board_reveal_secret('AUSTRALIA')
+        board.update_board_reveal_secret('AZTEC')
+
+        exception_occurred = False
+        try:
+            self.handler._handle_if_win()
+        except GameEndException:
+            exception_occurred = True
+
+        self.assertTrue(exception_occurred)
+
+    def test_process_valid_guess_correct_win(self):
+        self.handler.max_guess_count = 999
+
+        data = {'text': 'cn guess BACK', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BALL', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BAND', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BANK', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BAR', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BARK', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BAT', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BATTERY', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn guess BEACH', 'channel': 'chat_chanel', 'user': 'p4'}
+
+        exception_occurred = False
+        try:
+            self.handler.process(data)
+        except GameEndException:
+            exception_occurred = True
+
+        self.assertTrue(exception_occurred)
+
+    def test_process_stop(self):
+        data = {'text': 'cn guess BATTERY', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+
+        data = {'text': 'cn stop guess', 'channel': 'chat_chanel', 'user': 'p4'}
+        self.handler.process(data)
+        self.assertEqual("Ok on to Red Team", self.slack_client.api_calls[-1][1])

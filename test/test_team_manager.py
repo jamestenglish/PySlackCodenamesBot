@@ -1,9 +1,9 @@
 import unittest
-from .mock_slack_client import MockSlackClient
+from test.mock_slack_client import MockSlackClient
 from team_manager import TeamManager
 from player import Player
 from chat import Chat
-from .random_mock import RandomMock
+from test.random_mock import RandomMock
 
 
 class TestTeamManager(unittest.TestCase):

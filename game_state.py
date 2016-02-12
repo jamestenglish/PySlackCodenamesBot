@@ -4,6 +4,7 @@ from generate_game_handler import GenerateGameHandler
 from clue_input_handler import ClueInputHandler
 from guess_input_handler import GuessInputHandler
 from board import Board
+from resolve_invalid_handler import ResolveInvalidHandler
 import random
 
 
@@ -18,6 +19,7 @@ class GameState:
         self.clue_input_handler = None
         self.rand_func = random_func
         self.clue_number = None
+        self.previous_handler = None
         if not self.rand_func:
             self.random_func = random
         
@@ -35,4 +37,19 @@ class GameState:
         
     def guess_input_complete(self):
         self.generate_game_complete()
-        
+
+    def interrupt_handler(self, handler):
+        self.previous_handler = self.handler
+        self.handler = handler
+
+    def restore_handler(self):
+        self.handler = self.previous_handler
+        self.previous_handler = None
+
+    def invalid_handler_complete(self):
+        self.previous_handler = None
+        self.handler = ResolveInvalidHandler(self)
+        self.handler.start()
+
+    def resolve_invalid_handler_complete(self):
+        self.generate_game_complete()

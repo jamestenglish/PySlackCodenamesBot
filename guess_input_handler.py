@@ -10,65 +10,64 @@ class GuessInputHandler:
         self.game_state = game_state
         self.max_guess_count = clue_number + 1
         self.guess_count = 1
-        self.process_func = self._process_guess
         self.team_manager = game_state.team_manager
         self.board = game_state.board
         self.chat = game_state.chat
-        
-    def process(self, data):
-        if self.process_func:
-            self.process_func(data)
             
     def tick(self):
         pass
     
-    def _process_guess(self, data):
+    def process(self, data):
         if self._is_guess_command(data) and self._is_current_player(data):
             if GUESS_STOP_COMMAND in data['text']:
-                if self.guess_count < 1:
-                    self.chat.message("You have to guess at least once!") 
-                    return
-                else:
-                    return
+                self._process_stop()
             else:
-                guess = data['text'].replace(GUESS_COMMAND, '').strip()
-                if guess.upper() not in self.board.current_board:
-                    self.chat.message("Invalid Guess, not a choice on the board! Try again")
-                    return
-                else:
-                    self._process_valid_guess(guess)
-                    return 
+                self._process_guess(data)
         elif self._is_guess_command(data) and not self._is_current_player(data):
             self.chat.message("Shush <@{}>! It's not your turn to guess!".format(data['user']))
-            return    
-        
+
+    def _process_guess(self, data):
+        guess = data['text'].replace(GUESS_COMMAND, '').strip()
+        if guess.upper() not in self.board.current_board:
+            self.chat.message("Invalid Guess, not a choice on the board! Try again")
+        else:
+            self._process_valid_guess(guess)
+
+    def _process_stop(self):
+        if self.guess_count < 2:
+            self.chat.message("You have to guess at least once!")
+        else:
+            self._process_stop_success()
+
+    def _process_stop_success(self):
+        self.board.display_board()
+        self.board.next_team()
+        self.chat.message("Ok on to {}".format(self.board.current_team))
+        self.game_state.guess_input_complete()
+
     def _process_valid_guess(self, guess):
         secret = self.board.get_corresponding_secret(guess)
         if secret == ASSASSIN_SPOT:
             self._handle_assassin_guess(guess)
-            return
         elif self._is_wrong_guess(guess, self.board.current_team):
             self._handle_wrong_guess(guess)
-            return
         else:
             self._handle_correct_guess(guess)
-            return
 
     def _handle_correct_guess(self, guess):
-        print(str(self.guess_count))
-        print(str(self.max_guess_count))
+        self.chat.message("Correct! You have {} more guesses.".format(self.max_guess_count- self.guess_count))
+
         self.board.update_board_reveal_secret(guess)
         self.board.display_board()
-        
+
+        self._handle_if_win()
+
         if self.guess_count == self.max_guess_count:
             self.board.next_team()
             self.chat.message("No more guesses! On to the {}".format(self.board.current_team))
-            print('done')
             self.game_state.guess_input_complete()
-            return
-        
-        print('continue')
-        self.guess_count += 1
+        else:
+            self.guess_count += 1
 
     def _handle_assassin_guess(self, guess):
         self.board.update_board_reveal_secret(guess)
@@ -83,10 +82,19 @@ class GuessInputHandler:
     def _handle_wrong_guess(self, guess):
         self.board.update_board_reveal_secret(guess)
         self.board.display_board()
+
+        self._handle_if_win()
+
         self.board.next_team()
         self.chat.message("Wrong answer! On to the {}".format(self.board.current_team))
         self.game_state.guess_input_complete()
-        
+
+    def _handle_if_win(self):
+        winner = self.board.get_winner()
+        if winner is not None:
+            self.chat.message("GAME OVER! {} WINS!".format(winner))
+            raise GameEndException()
+
     def _is_wrong_guess(self, guess, current_team):
         secret = self.board.get_corresponding_secret(guess)
         return secret == BYSTANDER_SPOT or ((current_team == RED_TEAM and secret == BLUE_SPOT) or (current_team == BLUE_TEAM and secret == RED_SPOT))

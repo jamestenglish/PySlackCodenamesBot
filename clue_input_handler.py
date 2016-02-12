@@ -1,7 +1,8 @@
-from board import BLUE_TEAM
+from spymaster_manager import SpymasterManager
 from guess_input_handler import GUESS_COMMAND, GUESS_STOP_COMMAND
 
 INVALID_CLUE_COMMAND = "cn invalid clue"
+
 
 class ClueInputHandler:
     def __init__(self, game_state):
@@ -10,6 +11,7 @@ class ClueInputHandler:
         self.process_func = None
         self.clue_word = None
         self.clue_num = None
+        self.spymaster_manager = SpymasterManager(game_state)
     
     def process(self, data):
         if self.process_func:
@@ -20,7 +22,7 @@ class ClueInputHandler:
             self.tick_func()
     
     def _solicit_word_tick(self):
-        spymaster = self._get_spymaster()
+        spymaster = self.spymaster_manager.get_spymaster()
             
         self.process_func = self._process_word
         
@@ -28,16 +30,9 @@ class ClueInputHandler:
             
         self.tick_func = None
         
-    def _get_spymaster(self):
-        spymaster = self.game_state.team_manager.get_red_spymaster()
-        if self.game_state.board.current_team is BLUE_TEAM:
-            spymaster = self.game_state.team_manager.get_blue_spymaster()
-            
-        return spymaster
-        
     def _process_word(self, data):
-        spymaster = self._get_spymaster()
-        if self._is_private_message(data, spymaster):
+        spymaster = self.spymaster_manager.get_spymaster()
+        if self.spymaster_manager.is_private_message(data):
             text = data['text'].strip()
             if len(text.split(" ")) > 1:
                 spymaster.chat.message("Invalid input! One word only! Please try again...")
@@ -45,19 +40,16 @@ class ClueInputHandler:
                 self.clue_word = text
                 self.process_func = self._process_number
                 spymaster.chat.message("What is your clue number? [0-999]")
-                    
-    def _is_private_message(self, data, spymaster):  
-        return 'channel' in data and 'text' in data and spymaster.get_im_channel() in data['channel']          
-                    
+
     def _process_number(self, data):
-        spymaster = self._get_spymaster()
-        if self._is_private_message(data, spymaster):
+        if self.spymaster_manager.is_private_message(data):
             text = data['text'].strip()
             guess_count = 0
     
             try:
                 guess_count = int(text)
             except ValueError:
+                spymaster = self.spymaster_manager.get_spymaster()
                 spymaster.chat.message("Invalid Input! Enter a number [0-999]")
                 return
                 

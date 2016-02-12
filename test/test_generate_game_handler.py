@@ -1,11 +1,11 @@
 import unittest
 
-from .mock_slack_client import MockSlackClient
+from test.mock_slack_client import MockSlackClient
 from game_state import GameState
 from generate_game_handler import GenerateGameHandler
 from clue_input_handler import ClueInputHandler
 from player import Player
-from .random_mock import RandomMock
+from test.random_mock import RandomMock
 
 
 class MockChat:
