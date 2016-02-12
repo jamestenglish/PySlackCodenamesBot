@@ -36,15 +36,13 @@ class PendingStartHandler:
             if JOIN_COMMAND in data['text']:
                 player = Player(data['user'], self.game_state.slack_client)
                 self.game_state.team_manager.add_player(player)
-                    
-                    
+
     def _solicit_player_countdown_tick(self, remaining, last_message):
         if remaining == 0:
             if len(self.game_state.team_manager.players) < 4:
                 self.game_state.chat.message("Game needs at least 4 players, not enough joined to start")
                 raise GameEndException()
-            
-            
+
             self.game_state.pending_start_complete()
             return
         
