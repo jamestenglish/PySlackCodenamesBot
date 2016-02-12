@@ -24,5 +24,8 @@ class Game:
             self.__init__(self.slack_client)
 
     def tick(self):
-        if self.game_state.handler:
-            self.game_state.handler.tick()
+        try:
+            if self.game_state.handler:
+                self.game_state.handler.tick()
+        except GameEndException:
+            self.__init__(self.slack_client)
