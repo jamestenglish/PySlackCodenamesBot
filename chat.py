@@ -7,7 +7,6 @@ class Chat:
         self.channel = channel
 
     def message(self, text, last_message=None):
-
         result = None
         if last_message:
             result = self.slack_client.api_call('chat.update',
@@ -21,9 +20,10 @@ class Chat:
                                                 username='omnibot',
                                                 as_user=True)
 
-        if not result:
+        if result:
+            result = result.decode("utf-8")
+        else:
             return result
-
         result = json.loads(result)
 #         print('=======Result ==== {}:'.format(text))
 #         print(str(result))
