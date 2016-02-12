@@ -10,7 +10,10 @@ class Player:
         self.chat = Chat(slack_client, self.get_im_channel())
 
     def get_im_channel(self):
-        ims = json.loads(self.slack_client.api_call('im.list'))['ims']
+        result = self.slack_client.api_call('im.list')
+        if result:
+            result = result.decode("utf-8")
+        ims = json.loads(result)['ims']
         for im in ims:
             if im['user'] == self.slack_id:
                 return im['id']
@@ -19,7 +22,10 @@ class Player:
         raise "IM Channel not found!"
 
     def get_username(self):
-        user_api = json.loads(self.slack_client.api_call('users.info', user=self.slack_id))['user']
+        result = self.slack_client.api_call('users.info', user=self.slack_id)
+        if result:
+            result = result.decode("utf-8")
+        user_api = json.loads(result)['user']
         return user_api['name']
 
     def __hash__(self):
