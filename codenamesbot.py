@@ -13,6 +13,7 @@ outputs = []
 crontable = [[1, "tick"]]
 result = slack_client.api_call('users.list')
 bot_user_id = None
+
 if result:
     result = result.decode("utf-8")
     result = json.loads(result)
@@ -23,13 +24,10 @@ if result:
 
 current_game = Game(slack_client)
 
-
 def tick():
     current_game.tick()
 
-
 def process_message(data):
-    print(data)
 
     if data['type'] == 'message' and 'text' in data and data['user'] != bot_user_id:
         current_game.process(data)
